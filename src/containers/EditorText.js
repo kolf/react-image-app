@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import Footer from "components/Footer";
-import Cropper from "components/Cropper";
-import Transformer from "components/Transformer";
-import Prompt from "components/Prompt";
-import { uid } from "utils";
-import addTextUrl from "assets/addText.png";
+import Footer from "../components/Footer";
+import Cropper from "../components/Cropper";
+import Transformer from "../components/Transformer";
+import Prompt from "../components/Prompt";
+import { uid } from "../utils";
+import addTextUrl from "../assets/addText.png";
 
 const colors = [
   "fff45c",
@@ -64,7 +64,7 @@ const Colors = ({ onChange, value }) => (
           key={c}
           onClick={e =>
             onChange({
-              color: c
+              fill: c
             })
           }
           className={value === c ? "active" : null}
@@ -114,8 +114,13 @@ const Input = ({ onChange, value }) => (
 
 const statusMap = {
   create: "添加文字",
-  update: "编辑文字",
-  "": "文字"
+  update: "编辑文字"
+};
+
+const defaultEditText = {
+  text: "",
+  fill: colors[0],
+  fontFamily: fontFamilys[2]
 };
 
 class EditorText extends Component {
@@ -125,9 +130,7 @@ class EditorText extends Component {
     stageWidth: 1,
     editText: {
       key: "",
-      text: "快来开启金魔方魔幻路程吧",
-      color: colors[0],
-      fontFamily: fontFamilys[2]
+      ...defaultEditText
     },
     textStatus: ""
   };
@@ -148,9 +151,6 @@ class EditorText extends Component {
 
       for (const { attrs } of images) {
         const key = attrs.uid;
-
-        console.log(key);
-
         if (!/bg|image|text/g.test(key)) {
           break;
         }
@@ -177,7 +177,7 @@ class EditorText extends Component {
     const imageKey = uid.get("text-");
 
     imageMap.set(imageKey, {
-      fill: editText.color,
+      fill: editText.fill,
       text: editText.text,
       fontFamily: editText.fontFamily,
       x: stageWidth / 2,
@@ -189,10 +189,12 @@ class EditorText extends Component {
       index: this.index++
     });
 
-    this.setState({ imageMap, textStatus: "" });
+    console.log(imageMap, "imageMap");
+
+    this.setState({ imageMap, textStatus: "", editText: defaultEditText });
   };
 
-  save = (e, callback) => {
+  saveStage = (e, callback) => {
     this.setState({
       activeKey: ""
     });
@@ -210,7 +212,6 @@ class EditorText extends Component {
   };
 
   handleTap = activeKey => {
-    console.log(activeKey);
     if (!/text/g.test(activeKey)) {
       this.setState({
         activeKey: ""
@@ -319,6 +320,9 @@ class EditorText extends Component {
     const { x, y, scaleX, scaleY, width, height, rotation } = imageMap.get(
       activeKey
     );
+
+    console.log(width, "width");
+
     return {
       x,
       y,
@@ -366,24 +370,35 @@ class EditorText extends Component {
   onCancel = e => {
     const { textStatus } = this.state;
     if (!textStatus) {
-      this.goTo("/index");
+      this.goTo("/");
     } else {
       this.setState({ textStatus: "" });
     }
   };
 
   onOk = e => {
-    const { textStatus, editText } = this.state;
+    const { textStatus, editText, activeKey } = this.state;
+
+    if (textStatus && !editText.text) {
+      alert("请输入文字！");
+      return;
+    }
 
     if (textStatus === "create") {
       this.createImage();
     } else if (textStatus === "update") {
-      this.updateImage({
-        ...editText
+      this.updateImage(
+        {
+          ...editText
+        },
+        false
+      );
+      this.setState({
+        textStatus: "",
+        editText: defaultEditText
       });
-      this.setState({ textStatus: "" });
     } else {
-      this.save(e, stageJson => {
+      this.saveStage(e, stageJson => {
         Prompt.message(<span>保存成功</span>);
       });
     }
@@ -404,7 +419,8 @@ class EditorText extends Component {
       imageMap,
       stageWidth,
       activeKey,
-      editText: { text, color, fontFamily },
+      editText: { text, fill, fontFamily },
+      updateKey,
       textStatus
     } = this.state;
     const images = [...imageMap.values()].sort(
@@ -415,9 +431,11 @@ class EditorText extends Component {
       return <div className="page" />;
     }
 
+    console.log(updateKey, "updateKey");
+
     return (
       <div className="page">
-        <div className="body" style={textStatus ? s.body : null}>
+        <div className="body" style={s.body}>
           <div className="stage">
             <Transformer
               onMultipointStart={this.hanleMultipointStart}
@@ -451,8 +469,9 @@ class EditorText extends Component {
                 })}
                 {activeKey ? (
                   <Cropper.Selected
-                    {...this.getSelectdProps()}
+                    id={updateKey}
                     onDelete={this.onDelete}
+                    {...this.getSelectdProps()}
                   />
                 ) : null}
               </Cropper>
@@ -462,27 +481,35 @@ class EditorText extends Component {
         </div>
 
         {textStatus && (
-          <div className="text-root">
-            <Input onChange={this.onEditText} value={text} />
-            <Colors onChange={this.onEditText} value={color} />
-            <Texts onChange={this.onEditText} value={fontFamily} />
+          <div className="text-root-mask">
+            <div className="text-root">
+              <Input onChange={this.onEditText} value={text} />
+              <Colors onChange={this.onEditText} value={fill} />
+              <Texts onChange={this.onEditText} value={fontFamily} />
+              <Footer
+                key={"footer-text"}
+                style={{ background: "#000", zIndex: 1100 }}
+              >
+                <Footer.CancelIcon onClick={this.onCancel} />
+                <Footer.Title>{statusMap[textStatus]}</Footer.Title>
+                <Footer.OkIcon onClick={this.onOk} />
+              </Footer>
+            </div>
           </div>
         )}
-        <Footer>
+        <Footer key={"footer"}>
           <Footer.CancelIcon onClick={this.onCancel} />
-          <Footer.Title>{statusMap[textStatus]}</Footer.Title>
+          <Footer.Title>文字</Footer.Title>
           <Footer.OkIcon onClick={this.onOk} />
         </Footer>
       </div>
     );
   }
 }
-
 const s = {
   body: {
-    paddingBottom: "5.4rem",
+    paddingBottom: "2.3rem",
     transition: ".2 all"
   }
 };
-
 export default EditorText;

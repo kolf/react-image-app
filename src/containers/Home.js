@@ -34,22 +34,23 @@ class Home extends Component {
   };
 
   componentDidMount() {
-    this.state.stageWidth = Math.min(window.innerWidth, 640) * 0.8;
+    this.setState({
+      stageWidth: Math.min(window.innerWidth, 640) * 0.8
+    });
     this.initStage();
   }
 
-  async loadSageUrl() {
-    const imgId = getQueryString("getQueryString");
+  loadScrUrl = () => {
+    const imgId = getQueryString("getQueryString") || "img01";
 
-    const resultUrl = await axios
+    return axios
       .get(`${API_ROOT}/mc/app/read/v1/base/box/img/info?imgId=${imgId}`)
-      .then(res => (res.data.object.baseBoxImgInfo || {}).imgPath);
+      .then(
+        res => `${API_ROOT}/app/icons${res.data.object.baseBoxImgInfo.imgPath}`
+      );
+  };
 
-    console.log(resultUrl);
-  }
-
-  initStage = () => {
-    const { resultUrl } = this.props;
+  initStage = async () => {
     const { imageMap } = this.state;
     const stageJson = JSON.parse(window.localStorage.getItem("stageJson"));
     const stageKey = window.localStorage.getItem("stageKey"); // 保存并发布后清除
@@ -69,17 +70,18 @@ class Home extends Component {
           uid: key
         });
       }
-    } else if (resultUrl) {
+    } else {
+      const srcUrl = await this.loadScrUrl();
       this.push({
-        src: resultUrl
+        src: srcUrl
       });
-      this.save();
     }
-
-    this.state.activeKey = [...imageMap.keys()][0];
-    // new Map().keys
-
-    this.setState({ imageMap });
+    if (imageMap.size > 0) {
+      this.setState(
+        { imageMap, activeKey: [...imageMap.keys()][0] },
+        this.saveStage
+      );
+    }
   };
 
   push = ({ src }) => {
@@ -99,14 +101,12 @@ class Home extends Component {
     });
   };
 
-  save = e => {
-    const timer = setTimeout(() => {
-      clearTimeout(timer);
-      const stageJson = this.stage.getStage().toJSON();
-
+  saveStage = e => {
+    if (this.stageRef) {
+      const stageJson = this.stageRef.getStage().toJSON();
       window.localStorage.setItem("stageJson", stageJson);
       window.localStorage.setItem("stageKey", Date.now());
-    }, 30);
+    }
   };
 
   onUpload = e => {
@@ -174,8 +174,6 @@ class Home extends Component {
   };
 
   updateImage = (props, update = true) => {
-    return false;
-
     const { activeKey, imageMap } = this.state;
 
     if (!activeKey) return;
@@ -195,7 +193,7 @@ class Home extends Component {
     const { imageMap, stageWidth } = this.state;
     const images = [...imageMap.values()];
 
-    if (!images.length) {
+    if (images.length === 0) {
       return <div className="page" />;
     }
 
@@ -211,7 +209,7 @@ class Home extends Component {
             >
               <Cropper
                 style={{ background: "#333" }}
-                stageRef={f => (this.stage = f)}
+                stageRef={f => (this.stageRef = f)}
                 width={stageWidth}
               >
                 {images.map(image => {
@@ -225,7 +223,7 @@ class Home extends Component {
               </Cropper>
             </Transformer>
             <div className="save-btn">
-              <a onClick={this.onUpload}>保存并上传</a>
+              <span onClick={this.onUpload}>保存并上传</span>
             </div>
           </div>
         </div>

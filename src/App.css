@@ -133,11 +133,20 @@ input[type="password"] {
   margin: auto;
 }
 /* editor-text */
+.text-root-mask{
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  background-color: rgba(0, 0, 0, .8)
+}
 .text-root {
   position: absolute;
-  background: #222;
-  height: 5.2rem;
-  bottom: 2rem;
+  background: #000;
+  height: 7.2rem;
+  bottom: 0;
   width: 100%;
 }
 
@@ -199,6 +208,7 @@ input[type="password"] {
 .input > input {
   width: 100%;
   /* height: .6rem; */
+  outline: 0;
   line-height: 1;
   font-size: 0.6rem;
   background: #fff;

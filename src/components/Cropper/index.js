@@ -129,7 +129,7 @@ class Drawing extends Component {
     const colors = [];
 
     for (const j in this.sampleColors) {
-      if (s == null) s = this.sampleColors[j];
+      if (s === null) s = this.sampleColors[j];
       colors.push(this.sampleColors[j]);
     }
     colors.sort((a, b) => {
@@ -147,7 +147,7 @@ class Drawing extends Component {
     const paths = [s];
     do {
       s = paths.pop();
-      if (s == null) break;
+      if (s === null) break;
       const index = (width * s.y + s.x) * 4;
       const red = this.bitmap.data[index];
       const green = this.bitmap.data[index + 1];
@@ -155,7 +155,7 @@ class Drawing extends Component {
       const alpha = this.bitmap.data[index + 3];
 
       // 是否己经探查过了？使用ALPHA通道进行标记，0xfa表示己经探查过了
-      if (alpha == 0xfa) continue;
+      if (alpha === 0xfa) continue;
       this.bitmap.data[index + 3] = 0xfa;
 
       // 如果当前点的颜色不在采样颜色表内，则跳过该点
@@ -173,22 +173,22 @@ class Drawing extends Component {
       if (s.x > 0) {
         const d = { x: s.x - 1, y: s.y };
         const idx = (width * d.y + d.x) * 4;
-        if (this.bitmap.data[idx + 3] == 0xff) left = d;
+        if (this.bitmap.data[idx + 3] === 0xff) left = d;
       }
       if (s.y > 0) {
         const d = { x: s.x, y: s.y - 1 };
         const idx = (width * d.y + d.x) * 4;
-        if (this.bitmap.data[idx + 3] == 0xff) top = d;
+        if (this.bitmap.data[idx + 3] === 0xff) top = d;
       }
       if (s.x < width) {
         const d = { x: s.x + 1, y: s.y };
         const idx = (width * d.y + d.x) * 4;
-        if (this.bitmap.data[idx + 3] == 0xff) right = d;
+        if (this.bitmap.data[idx + 3] === 0xff) right = d;
       }
       if (s.y < height) {
         const d = { x: s.x, y: s.y + 1 };
         const idx = (width * d.y + d.x) * 4;
-        if (this.bitmap.data[idx + 3] == 0xff) bottom = d;
+        if (this.bitmap.data[idx + 3] === 0xff) bottom = d;
       }
 
       // 记录路径
@@ -223,7 +223,7 @@ class Drawing extends Component {
   colorMatches = (r, g, b, min) => {
     let start = 0;
     let end = this.sampleColors.length;
-    const mid = 0;
+
     for (let i = 0; i < this.sampleColors.length; i++) {
       const mid = parseInt(start + (end - start) / 2);
       const left = parseInt(start + (mid - start) / 2);
@@ -259,7 +259,7 @@ class Drawing extends Component {
   colorDiff = (x, y, z, r, g, b) =>
     Math.sqrt(Math.pow(x - r, 2) + Math.pow(y - g, 2) + Math.pow(z - b, 2));
 
-  getImage = () => {
+  getResult = () => {
     const { width, height } = this.state;
     const length = this.bitmap.data.length;
     for (let i = 0; i < length; i += 4) {
@@ -278,7 +278,7 @@ class Drawing extends Component {
     result.height = height;
     resultCtx.putImageData(this.bitmap, 0, 0);
 
-    return result.toDataURL(`image/png`);
+    return result;
   };
 
   render() {
@@ -317,7 +317,7 @@ class XImage extends Component {
 
     const crossOrigin = /^http/.test(src);
     loadImage(src, crossOrigin).then(image => {
-      this.imageNode.getLayer().batchDraw();
+      this.imageRef.getLayer().batchDraw();
       const { width, height } =
         maxWidth && maxHeight
           ? resizeImage(image.width, image.height, maxWidth, maxHeight)
@@ -340,8 +340,8 @@ class XImage extends Component {
     const { width, height, image } = this.state;
 
     if (
-      width != nextProps.width ||
-      height != nextProps.height ||
+      width !== nextProps.width ||
+      height !== nextProps.height ||
       this.props.maxWidth < width ||
       this.props.maxHeight < height
     ) {
@@ -374,9 +374,9 @@ class XImage extends Component {
             : undefined
         }
         image={this.state.image}
-        ref={node => {
-          this.imageNode = node;
-          imageRef && imageRef(node);
+        ref={f => {
+          this.imageRef = f;
+          imageRef && imageRef(f);
         }}
       />
     );
@@ -395,29 +395,35 @@ class XText extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (
-      this.props.text != nextProps.text ||
-      this.props.fontFamily != nextProps.fontFamily ||
-      this.state.width != nextProps.width
+      this.props.text !== nextProps.text ||
+      this.props.fontFamily !== nextProps.fontFamily ||
+      this.state.width !== nextProps.width
     ) {
-      this.setRect();
+      const timer = setTimeout(() => {
+        clearTimeout(timer);
+        this.setRect();
+      }, 30);
     }
   }
 
   setRect = () => {
     const { onChange } = this.props;
-    const { width, height } = this.state;
-    const { textHeight, textWidth } = this.text;
-    if (width != textWidth || height != textHeight) {
-      this.setState({
-        width: textWidth + 10,
-        height: textHeight + 6
+    const { textHeight, textWidth } = this.textRef;
+    const newHeight = textHeight + 6;
+    const newWidth = textWidth + 10;
+
+    this.setState({
+      width: newWidth,
+      height: newHeight
+    });
+
+    console.log(this.textRef.parent, "this.textRef");
+
+    onChange &&
+      onChange({
+        width: newWidth,
+        height: newHeight
       });
-      onChange &&
-        onChange({
-          width: textWidth + 10,
-          height: textHeight + 6
-        });
-    }
   };
 
   render() {
@@ -440,7 +446,7 @@ class XText extends Component {
       x: 5,
       y: 3,
       ref: f => {
-        this.text = f;
+        this.textRef = f;
         textRef && textRef(f);
       }
     };

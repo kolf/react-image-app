@@ -38,7 +38,7 @@ class FilterClip extends Component {
     this.props.history.push(path);
   };
 
-  save = () => {
+  saveStage = () => {
     if (!this.stage) {
       return;
     }
@@ -47,11 +47,6 @@ class FilterClip extends Component {
       window.localStorage.setItem("imgUrl", createObjectURL(blob));
       this.goTo(`/editor-image`);
     });
-
-    // stage2Image(this.stage, url => {
-    //   window.localStorage.setItem("imgUrl", url);
-    //   this.goTo(`/editor-image`);
-    // });
   };
 
   imageRef = f => {
@@ -105,7 +100,7 @@ class FilterClip extends Component {
         <Footer>
           <Footer.CancelIcon onClick={e => this.goTo(`/image-upload/index`)} />
           <Footer.Title>阈值抠图</Footer.Title>
-          <Footer.OkIcon onClick={e => this.save()} />
+          <Footer.OkIcon onClick={e => this.saveStage()} />
         </Footer>
       </div>
     );

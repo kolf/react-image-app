@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-
+import { createObjectURL, canvasToBlob } from "blob-util";
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
 
@@ -22,13 +22,15 @@ class CutClip extends Component {
     this.props.history.push(path);
   };
 
-  save = () => {
+  saveStage = () => {
     if (!this.drawingRef) {
       return;
     }
 
-    window.localStorage.setItem("imgUrl", this.drawingRef.getImage());
-    this.goTo("/editor-image");
+    canvasToBlob(this.drawingRef.getResult(), "image/png").then(blob => {
+      window.localStorage.setItem("imgUrl", createObjectURL(blob));
+      this.goTo(`/editor-image`);
+    });
   };
 
   render() {
@@ -60,7 +62,7 @@ class CutClip extends Component {
         <Footer>
           <Footer.CancelIcon onClick={e => this.goTo(`/image-upload/index`)} />
           <Footer.Title>图割抠图</Footer.Title>
-          <Footer.OkIcon onClick={this.save} />
+          <Footer.OkIcon onClick={this.saveStage} />
         </Footer>
       </div>
     );

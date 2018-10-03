@@ -80,8 +80,6 @@ class EditorImage extends Component {
         }))
       );
 
-    console.log(thumbs, "thumbs");
-
     this.setState({
       thumbs
     });
@@ -367,7 +365,7 @@ class EditorImage extends Component {
         </div>
         <Thumbs items={thumbs} onClick={this.handleThumbClick} />
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo("/index")} />
+          <Footer.CancelIcon onClick={e => this.goTo("/")} />
           <Footer.Title>图片</Footer.Title>
           <Footer.OkIcon
             onClick={e =>

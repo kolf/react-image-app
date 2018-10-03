@@ -55,8 +55,12 @@ const CancelIcon = ({ onClick }) => {
   );
 };
 
-const Footer = ({ children }) => {
-  return <div className="footer">{children}</div>;
+const Footer = ({ children, style }) => {
+  return (
+    <div className="footer" style={style || null}>
+      {children}
+    </div>
+  );
 };
 
 Footer.Item = Item;
