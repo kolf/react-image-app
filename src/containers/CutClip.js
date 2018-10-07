@@ -49,6 +49,7 @@ class CutClip extends Component {
               style={{ background: "#333" }}
               height={stageWidth}
               width={stageWidth}
+              pixelRatio={1}
             >
               <Cropper.Drawing
                 src={imgUrl}

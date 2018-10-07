@@ -7,8 +7,6 @@ import Clipping from "./containers/Clipping";
 import ClipHome from "./containers/ClipHome";
 import FilterClip from "./containers/FilterClip";
 import CutClip from "./containers/CutClip";
-
-import "./App.css";
 class App extends Component {
   render() {
     return (

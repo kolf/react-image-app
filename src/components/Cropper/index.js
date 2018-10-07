@@ -109,8 +109,8 @@ class Drawing extends Component {
       const stage = this.imageRef.getStage();
       const pos = stage.getPointerPosition();
       localPos = {
-        x: pos.x - this.imageRef.x(),
-        y: pos.y - this.imageRef.y()
+        x: parseInt(pos.x - this.imageRef.x()),
+        y: parseInt(pos.y - this.imageRef.y())
       };
 
       context.lineTo(localPos.x, localPos.y);
@@ -143,6 +143,8 @@ class Drawing extends Component {
     });
 
     this.sampleColors = colors;
+
+    console.log(this.sampleColors);
     // 从任意一点开始扩张，将相似区域的颜色先全部替换成红色看看
     const paths = [s];
     do {
@@ -196,6 +198,8 @@ class Drawing extends Component {
       if (top) paths.push(top);
       if (right) paths.push(right);
       if (bottom) paths.push(bottom);
+
+      // console.log(paths, "paths");
     } while (paths.length > 0);
 
     // 输出显示一下看看
