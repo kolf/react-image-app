@@ -45,7 +45,7 @@ class FilterClip extends Component {
 
     canvasToBlob(this.stage.getStage(), "image/png").then(blob => {
       window.localStorage.setItem("imgUrl", createObjectURL(blob));
-      this.goTo(`/editor-image`);
+      this.goTo(`/photo/editor-image`);
     });
   };
 
@@ -98,7 +98,9 @@ class FilterClip extends Component {
           />
         </div>
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo(`/image-upload/index`)} />
+          <Footer.CancelIcon
+            onClick={e => this.goTo(`/photo/image-upload/index`)}
+          />
           <Footer.Title>阈值抠图</Footer.Title>
           <Footer.OkIcon onClick={e => this.saveStage()} />
         </Footer>

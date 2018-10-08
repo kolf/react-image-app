@@ -68,7 +68,7 @@ class Clipping extends Component {
   save = () => {
     getCroppedImg(this.imageObj, this.croppedAreaPixels).then(blob => {
       window.localStorage.setItem("imgUrl", createObjectURL(blob));
-      this.goTo("/image-upload/index");
+      this.goTo("/photo/image-upload/index");
     });
   };
 
@@ -96,7 +96,9 @@ class Clipping extends Component {
           />
         </div>
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo(`/image-upload/index`)} />
+          <Footer.CancelIcon
+            onClick={e => this.goTo(`/photo/image-upload/index`)}
+          />
           <Footer.Title>裁切</Footer.Title>
           <Footer.OkIcon onClick={this.save} />
         </Footer>

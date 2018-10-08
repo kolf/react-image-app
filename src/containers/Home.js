@@ -17,12 +17,12 @@ const FooterItem = Footer.Item;
 const footers = [
   {
     text: "图片",
-    path: "/editor-image",
+    path: "/photo/editor-image",
     icon: imageIcon
   },
   {
     text: "文字",
-    path: "/editor-text",
+    path: "/photo/editor-text",
     icon: textIcon
   }
 ];

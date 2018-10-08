@@ -29,7 +29,7 @@ class CutClip extends Component {
 
     canvasToBlob(this.drawingRef.getResult(), "image/png").then(blob => {
       window.localStorage.setItem("imgUrl", createObjectURL(blob));
-      this.goTo(`/editor-image`);
+      this.goTo(`/photo/editor-image`);
     });
   };
 
@@ -61,7 +61,9 @@ class CutClip extends Component {
           </div>
         </div>
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo(`/image-upload/index`)} />
+          <Footer.CancelIcon
+            onClick={e => this.goTo(`/photo/image-upload/index`)}
+          />
           <Footer.Title>图割抠图</Footer.Title>
           <Footer.OkIcon onClick={this.saveStage} />
         </Footer>

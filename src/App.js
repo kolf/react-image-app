@@ -12,17 +12,25 @@ class App extends Component {
     return (
       <Router>
         <div className="App">
-          <Route exact path="/" component={Home} />
-          <Route exact path="/editor-image" component={EditorImage} />
-          <Route exact path="/editor-text" component={EditorText} />
-          <Route exact path="/image-upload/clipping" component={Clipping} />
-          <Route exact path="/image-upload/index" component={ClipHome} />
+          <Route exact path="/photo/" component={Home} />
+          <Route exact path="/photo/editor-image" component={EditorImage} />
+          <Route exact path="/photo/editor-text" component={EditorText} />
           <Route
             exact
-            path="/image-upload/filter-clip"
+            path="/photo/image-upload/clipping"
+            component={Clipping}
+          />
+          <Route exact path="/photo/image-upload/index" component={ClipHome} />
+          <Route
+            exact
+            path="/photo/image-upload/filter-clip"
             component={FilterClip}
           />
-          <Route exact path="/image-upload/cut-clip" component={CutClip} />
+          <Route
+            exact
+            path="/photo/image-upload/cut-clip"
+            component={CutClip}
+          />
         </div>
       </Router>
     );

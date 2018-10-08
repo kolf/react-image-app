@@ -126,11 +126,11 @@ class EditorImage extends Component {
     const { stageWidth, imageMap } = this.state;
     if (key === "upload") {
       window.localStorage.setItem("imgUrl", url);
-      this.goTo(`/image-upload/clipping`);
+      this.goTo(`/photo/image-upload/clipping`);
       this.save();
       return;
     } else if (key === "resources") {
-      this.goTo(`/resources`);
+      this.goTo(`/photo/resources`);
       this.save();
       return;
     }

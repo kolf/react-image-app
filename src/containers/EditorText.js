@@ -189,8 +189,6 @@ class EditorText extends Component {
       index: this.index++
     });
 
-    console.log(imageMap, "imageMap");
-
     this.setState({ imageMap, textStatus: "", editText: defaultEditText });
   };
 
@@ -321,8 +319,6 @@ class EditorText extends Component {
       activeKey
     );
 
-    console.log(width, "width");
-
     return {
       x,
       y,
@@ -370,14 +366,14 @@ class EditorText extends Component {
   onCancel = e => {
     const { textStatus } = this.state;
     if (!textStatus) {
-      this.goTo("/");
+      this.goTo("/photo");
     } else {
       this.setState({ textStatus: "" });
     }
   };
 
   onOk = e => {
-    const { textStatus, editText, activeKey } = this.state;
+    const { textStatus, editText } = this.state;
 
     if (textStatus && !editText.text) {
       alert("请输入文字！");

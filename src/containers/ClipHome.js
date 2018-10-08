@@ -11,12 +11,12 @@ const FooterItem = Footer.Item;
 const footers = [
   {
     text: "阈值抠图",
-    path: "/image-upload/filter-clip",
+    path: "/photo/image-upload/filter-clip",
     icon: c1Url
   },
   {
     text: "图割抠图",
-    path: "/image-upload/cut-clip",
+    path: "/photo/image-upload/cut-clip",
     icon: c3Url
   }
 ];
