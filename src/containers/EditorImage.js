@@ -365,7 +365,7 @@ class EditorImage extends Component {
         </div>
         <Thumbs items={thumbs} onClick={this.handleThumbClick} />
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo("/")} />
+          <Footer.CancelIcon onClick={e => this.goTo("/photo")} />
           <Footer.Title>图片</Footer.Title>
           <Footer.OkIcon
             onClick={e =>

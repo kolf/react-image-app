@@ -1,6 +1,7 @@
 import React, { Component } from "react";
+import Konva from "konva";
 import { Stage, Layer, Image, Text, Group, Rect } from "react-konva";
-import { resizeImage, fromURI, loadImage } from "./utils";
+import { resizeImage, loadImage } from "./utils";
 
 import removeIcon from "./remove.png";
 
@@ -9,7 +10,7 @@ class Drawing extends Component {
     isDrawing: false,
     width: 1,
     height: 1,
-    image: new window.Image()
+    image: null
   };
 
   bitmap = null;
@@ -20,8 +21,9 @@ class Drawing extends Component {
 
   componentDidMount() {
     const { maxHeight, maxWidth, src } = this.props;
-    fromURI(src, (error, image) => {
-      this.imageRef.getLayer().batchDraw();
+    const crossOrigin = /^http/g.test(src) ? "anonymous" : "";
+
+    loadImage(src, crossOrigin).then(image => {
       const canvas = document.createElement("canvas");
       const tempCanvas = document.createElement("canvas");
       const maskCanvas = document.createElement("canvas");
@@ -311,17 +313,15 @@ class Drawing extends Component {
 
 class XImage extends Component {
   state = {
-    image: new window.Image(),
+    image: null,
     width: this.props.width || 1,
     height: this.props.height || 1
   };
 
   componentDidMount() {
     const { maxHeight, maxWidth, onChange, src } = this.props;
-
-    const crossOrigin = /^http/.test(src);
+    const crossOrigin = /^http/g.test(src) ? "anonymous" : "";
     loadImage(src, crossOrigin).then(image => {
-      this.imageRef.getLayer().batchDraw();
       const { width, height } =
         maxWidth && maxHeight
           ? resizeImage(image.width, image.height, maxWidth, maxHeight)
