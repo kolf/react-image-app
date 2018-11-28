@@ -49,19 +49,17 @@ class CutClip extends Component {
     canvasToBlob(canvas).then(blob => {
       data.append("imgFile", blob);
       axios
-        .post(`${API_ROOT}/mc/app/write/v1/base/photo/upload`, data, {
+        .post(`${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`, data, {
           headers: { "content-type": "multipart/form-data" }
         })
         .then(res => {
+          console.log(res);
           if (res.data.code != "00") {
             alert(res.data.msg);
           } else {
             const imgUrl = `${API_ROOT}/app/icons${res.object.imgPath}`;
             callback(imgUrl);
           }
-        })
-        .catch(error => {
-          alert("上传失败，请重试！");
         });
     });
   };
@@ -141,7 +139,7 @@ class CutClip extends Component {
             onClick={e => this.goTo(`/photo/image-upload/index`)}
           />
           <Footer.Title>图割抠图</Footer.Title>
-          <Footer.OkIcon onClick={this.saveStage} />
+          <Footer.OkIcon onClick={e => this.saveStage()} />
         </Footer>
       </div>
     );

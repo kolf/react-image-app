@@ -17,7 +17,7 @@ const Thumbs = ({ items, onClick }) => {
   const uploadProps = {
     className: "upload-btn",
     name: "imgFile",
-    action: `${API_ROOT}/mc/app/write/v1/base/photo/upload`,
+    action: `${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`,
     // accept: "image/gif,image/png,image/jpeg,image/jpg,image/bmp",
     onSuccess(file) {
       const {
@@ -50,7 +50,7 @@ const Thumbs = ({ items, onClick }) => {
   return (
     <div className="upload-image-root">
       <div className="upload-box">
-        {linkBtn}
+        {UploadBtn}
         <div className="upload-list">
           <ul style={{ width: `${3.6 * (items.length + 1)}rem` }}>
             <li key="resources" onClick={e => onClick({ key: "resources" })}>
@@ -152,14 +152,14 @@ class EditorImage extends Component {
   };
 
   handleThumbClick = ({ key, url }) => {
-    console.log(url)
+    console.log(url);
     const { stageWidth, imageMap } = this.state;
     if (key === "upload") {
       if (url) {
         this.goTo(`/photo/image-upload/clipping?imgUrl=${url}`);
       } else {
         // this.goTo("/photo/upload");
-        window.location.href= "http://gold.dreamdeck.cn/photo/upload.html";
+        window.location.href = "http://gold.dreamdeck.cn/photo/upload.html";
         //this.goTo("/photo/image-upload/clipping?imgUrl=http://gold.dreamdeck.cn/app/icons/gold/test.jpg")
       }
 
