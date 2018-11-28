@@ -10,6 +10,7 @@
     "axios": "^0.18.0",
     "blob-util": "^2.0.2",
     "konva": "^2.4.0",
+    "localforage": "^1.7.2",
     "rc-notification": "^3.2.0",
     "rc-upload": "^2.6.0",
     "react": "^16.5.2",
@@ -30,9 +31,9 @@
     "extends": "react-app"
   },
   "browserslist": [
-    ">0.2%",
-    "not dead",
-    "not ie <= 11",
-    "not op_mini all"
+    "> 1%",
+    "last 2 versions",
+    "Android >= 3.2",
+    "Firefox >= 20"
   ]
 }

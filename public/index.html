@@ -3,10 +3,46 @@
 
 <head>
   <meta charset="utf-8">
-  <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=0,minimal-ui">
+  <meta name="theme-color" content="#000000">
   <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
+  <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
   <title>App</title>
+  <script>
+    (function (m, n) {
+      var o = navigator.userAgent,
+        p = /android|adr/gi.test(o),
+        j = /iphone|ipod|ipad/gi.test(o) && !p;
+      var k = n.documentElement;
+      var l = function () {
+        var a = k.getBoundingClientRect().width || 320;
+        var b = (a / 320) * 20;
+        b = b > 40 ? 40 : b;
+        k.style.fontSize = b + "px";
+        window.fontSize = b;
+      },
+        i;
+      m.addEventListener(
+        "resize",
+        function () {
+          clearTimeout(i);
+          i = setTimeout(l, 100);
+        },
+        false
+      );
+      m.addEventListener(
+        "pageshow",
+        function (a) {
+          if (a.persisted) {
+            clearTimeout(i);
+            i = setTimeout(l, 100);
+          }
+        },
+        false
+      );
+      l();
+    })(window, document);
+  </script>
 </head>
 
 <body>
@@ -14,7 +50,6 @@
     You need to enable JavaScript to run this app.
   </noscript>
   <div id="root"></div>
-  <script src="%PUBLIC_URL%/device.js"></script>
 </body>
 
 </html>

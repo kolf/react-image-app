@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import axios from "axios";
+import localforage from "localforage";
 import { getQueryString, uid } from "../utils";
 
 import Footer from "../components/Footer";
@@ -52,8 +53,12 @@ class Home extends Component {
 
   initStage = async () => {
     const { imageMap } = this.state;
-    const stageJson = JSON.parse(window.localStorage.getItem("stageJson"));
-    const stageKey = window.localStorage.getItem("stageKey"); // 保存并发布后清除
+    const stageKey = await localforage.getItem("stageKey"); // 保存并发布后清除
+    let stageJson = await localforage.getItem("stageJson");
+
+    if (typeof stageJson === "string") {
+      stageJson = JSON.parse(stageJson);
+    }
 
     if (stageJson && stageKey) {
       const images = (stageJson.children[0] || {}).children || [];
@@ -104,8 +109,8 @@ class Home extends Component {
   saveStage = e => {
     if (this.stageRef) {
       const stageJson = this.stageRef.getStage().toJSON();
-      window.localStorage.setItem("stageJson", stageJson);
-      window.localStorage.setItem("stageKey", Date.now());
+      localforage.setItem("stageJson", stageJson);
+      localforage.setItem("stageKey", Date.now());
     }
   };
 
