@@ -1,16 +1,30 @@
 import React, { Component } from "react";
 import axios from "axios";
 import localforage from "localforage";
+import { createObjectURL, canvasToBlob, dataURLToBlob } from "blob-util";
+
 import { getQueryString, uid } from "../utils";
 
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
 
 import Transformer from "../components/Transformer";
-import Prompt from "../components/Prompt";
 
 import imageIcon from "../assets/image.gif";
 import textIcon from "../assets/text.gif";
+
+const dataURLtoFile = (dataurl, filename) => {
+  const arr = dataurl.split(",");
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n) {
+    u8arr[n] = bstr.charCodeAt(n);
+    n -= 1; // to make eslint happy
+  }
+  return new File([u8arr], filename, { type: mime });
+};
 
 const API_ROOT = "http://gold.dreamdeck.cn";
 const FooterItem = Footer.Item;
@@ -27,16 +41,44 @@ const footers = [
     icon: textIcon
   }
 ];
+
 class Home extends Component {
   state = {
     imageMap: new Map(),
+    jmfUser: null,
+    jmfProductId: "",
     activeKey: "",
-    stageWidth: 1
+    stageWidth: 1,
+    uploading: false,
+    colorId: "000000",
+    stage: {
+      x: 0,
+      y: 0,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0,
+      initScale: 1
+    }
   };
 
+  defaultStage = null;
+
   componentDidMount() {
+    const stageWidth = Math.min(window.innerWidth, 640) * 0.8;
+    this.defaultStage = {
+      ...this.state.stage,
+      x: stageWidth / 2,
+      y: stageWidth / 2,
+      offset: {
+        x: stageWidth / 2,
+        y: stageWidth / 2
+      }
+    };
     this.setState({
-      stageWidth: Math.min(window.innerWidth, 640) * 0.8
+      stageWidth,
+      stage: {
+        ...this.defaultStage
+      }
     });
     this.initStage();
   }
@@ -52,7 +94,16 @@ class Home extends Component {
   };
 
   initStage = async () => {
+    localforage.getItem("jmfUser").then(v => {
+      console.log("jmfUser-----" + v);
+      this.jmfUser = JSON.parse(v);
+    });
+    localforage.getItem("jmfProductId").then(v => {
+      console.log("jmfProductId-----" + v);
+      this.jmfProductId = v;
+    });
     const { imageMap } = this.state;
+    const colorId = getQueryString("color");
     const stageKey = await localforage.getItem("stageKey"); // 保存并发布后清除
     let stageJson = await localforage.getItem("stageJson");
 
@@ -60,13 +111,13 @@ class Home extends Component {
       stageJson = JSON.parse(stageJson);
     }
 
-    if (stageJson && stageKey) {
+    if (stageJson) {
       const images = (stageJson.children[0] || {}).children || [];
 
       for (const { attrs } of images) {
         const key = attrs.uid;
         if (!/bg|image|text/g.test(key)) {
-          break;
+          continue;
         }
         const rotation = attrs.rotation || 0;
         imageMap.set(key, {
@@ -75,18 +126,22 @@ class Home extends Component {
           uid: key
         });
       }
-    } else {
-      const srcUrl = await this.loadScrUrl();
-      this.push({
-        src: srcUrl
-      });
+
+      // console.log(images, "images");
     }
+
     if (imageMap.size > 0) {
       this.setState(
-        { imageMap, activeKey: [...imageMap.keys()][0] },
+        { imageMap, activeKey: [...imageMap.keys()][0], colorId },
         this.saveStage
       );
+    } else {
+      this.setState({
+        colorId
+      });
     }
+
+    localforage.setItem("colorId", colorId);
   };
 
   push = ({ src }) => {
@@ -115,92 +170,133 @@ class Home extends Component {
   };
 
   onUpload = e => {
-    Prompt.message(<span>上传成功</span>);
+    this.setState(
+      {
+        stage: {
+          ...this.defaultStage,
+          x: 0,
+          y: 0,
+          offset: {
+            x: 0,
+            y: 0
+          }
+        },
+        uploading: true
+      },
+      () => {
+        const data = new FormData();
+        const file = dataURLToBlob(this.stageRef.getStage().toDataURL());
+        data.append("imgFile", file);
+        data.append("userId", this.jmfUser.userId);
+        data.append("productId", this.jmfProductId);
+        axios
+          .post(`${API_ROOT}/mc/app/write/v1/base/img/edit/upload`, data, {
+            headers: { "content-type": "multipart/form-data" }
+          })
+          .then(res => {
+            if (res.data.code != "00") {
+              alert(res.data.msg);
+            } else {
+              window.location.href =
+                "http://gold.dreamdeck.cn/photo/success.html";
+            }
+          })
+          .catch(error => {
+            alert("上传失败，请重试！");
+          });
+      }
+    );
   };
 
+  goTo = (path, state) => {
+    this.props.history.push(path);
+  };
+
+  // handlePressMove = e => {
+  //   const { stage } = this.state;
+
+  //   this.updateStage({
+  //     x: e.deltaX + stage.x,
+  //     y: e.deltaY + stage.y
+  //   });
+  // };
   handlePressMove = e => {
-    const { activeKey, imageMap } = this.state;
+    const { stage, stageWidth } = this.state;
 
-    if (!activeKey) {
-      return;
-    }
+    const x = Math.max(
+      Math.min(stageWidth * 1.1, e.deltaX + stage.x),
+      stageWidth * -0.1
+    );
 
-    const image = imageMap.get(activeKey);
+    const y = Math.max(
+      Math.min(stageWidth * 1.1, e.deltaY + stage.y),
+      stageWidth * -0.1
+    );
 
-    this.updateImage({
-      x: e.deltaX + image.x,
-      y: e.deltaY + image.y
+    this.updateStage({
+      x,
+      y
     });
+    // const { activeKey, imageMap, stageWidth } = this.state;
+
+    // if (!activeKey) {
+    //   return;
+    // }
+
+    // const image = imageMap.get(activeKey);
+    // const rWdith = (image.width / 2) * (image.scaleX || 1);
+    // const rHeight = (image.height / 2) * (image.scaleY || 1);
+
+    // const x = Math.min(
+    //   Math.max(e.deltaX + image.x, rWdith),
+    //   stageWidth - rWdith
+    // );
+    // const y = Math.min(
+    //   Math.max(e.deltaY + image.y, rHeight),
+    //   stageWidth - rHeight
+    // );
+
+    // this.updateStage({
+    //   x,
+    //   y
+    // });
   };
 
   handlePinch = e => {
-    const { activeKey, imageMap } = this.state;
+    const { stage } = this.state;
+    const scale = Math.max(e.zoom * stage.initScale, 1);
 
-    if (!activeKey) {
-      return;
-    }
-
-    const image = imageMap.get(activeKey);
-    const scale = e.zoom * image.initScale;
-
-    this.updateImage({
+    this.updateStage({
       scaleX: scale,
       scaleY: scale
     });
   };
 
-  handleRotate = e => {
-    const { activeKey, imageMap } = this.state;
+  hanleMultipointStart = e => {
+    const { stage } = this.state;
 
-    if (!activeKey) {
-      return;
-    }
-
-    const image = imageMap.get(activeKey);
-    this.updateImage({
-      rotation: e.angle + image.rotation
+    this.updateStage({
+      initScale: stage.scaleX || 1
     });
   };
 
-  hanleMultipointStart = e => {
-    const { activeKey, imageMap } = this.state;
-
-    if (!activeKey) {
-      return;
-    }
-
-    const image = imageMap.get(activeKey);
-    this.updateImage(
+  updateStage = (props, callback) => {
+    this.setState(
       {
-        initScale: image.scaleX || 1
+        stage: {
+          ...this.state.stage,
+          ...props
+        }
       },
-      false
+      () => {
+        callback && callback();
+      }
     );
   };
 
-  updateImage = (props, update = true) => {
-    const { activeKey, imageMap } = this.state;
-
-    if (!activeKey) return;
-
-    const image = imageMap.get(activeKey);
-    imageMap.set(activeKey, {
-      ...image,
-      ...props
-    });
-
-    if (update) {
-      this.forceUpdate();
-    }
-  };
-
   render() {
-    const { imageMap, stageWidth } = this.state;
+    const { imageMap, stageWidth, stage, uploading, colorId } = this.state;
     const images = [...imageMap.values()];
-
-    if (images.length === 0) {
-      return <div className="page" />;
-    }
 
     return (
       <div className="page">
@@ -210,13 +306,23 @@ class Home extends Component {
               onMultipointStart={this.hanleMultipointStart}
               onPinch={this.handlePinch}
               onPressMove={this.handlePressMove}
-              onRotate={this.handleRotate}
             >
               <Cropper
-                style={{ background: "#333" }}
+                layerProps={{
+                  ...stage
+                }}
+                style={{ background: "#" + colorId }}
                 stageRef={f => (this.stageRef = f)}
                 width={stageWidth}
               >
+                {!uploading && (
+                  <Cropper.Rect
+                    name="stageColor"
+                    fill={"#" + colorId}
+                    width={stageWidth}
+                    height={stageWidth}
+                  />
+                )}
                 {images.map(image => {
                   const key = image.uid;
                   return /image|bg/.test(key) ? (

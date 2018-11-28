@@ -1,8 +1,11 @@
 import React, { Component } from "react";
+import localforage from "localforage";
+import axios from "axios";
 import { createObjectURL, canvasToBlob } from "blob-util";
 import ReactCrop from "react-easy-crop";
 import Footer from "../components/Footer";
 import { loadImage } from "../components/Cropper/utils";
+import { getQueryString } from "../utils";
 
 function getCroppedImg(image, pixelCrop) {
   const canvas = document.createElement("canvas");
@@ -35,8 +38,9 @@ class Clipping extends Component {
   imageObj = null;
   croppedAreaPixels = null;
 
-  componentDidMount() {
-    const imgUrl = window.localStorage.getItem("imgUrl");
+  async componentDidMount() {
+    const imgUrl = await getQueryString("imgUrl");
+    // alert(imgUrl)
     const width = Math.min(window.innerWidth, 640);
 
     loadImage(imgUrl, "image/png").then(image => {
@@ -61,14 +65,15 @@ class Clipping extends Component {
     this.setState({ zoom });
   };
 
-  goTo = path => {
+  goTo = (path, state) => {
     this.props.history.push(path);
   };
 
   save = () => {
     getCroppedImg(this.imageObj, this.croppedAreaPixels).then(blob => {
-      window.localStorage.setItem("imgUrl", createObjectURL(blob));
-      this.goTo("/photo/image-upload/index");
+      localforage.setItem("imgUrl", createObjectURL(blob)).then(imgUrl => {
+        this.goTo("/photo/image-upload/index");
+      });
     });
   };
 

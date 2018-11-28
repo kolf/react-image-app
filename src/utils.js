@@ -13,3 +13,7 @@ export const uid = {
     return prefix + Date.now() + this.index++;
   }
 };
+
+export function isWindow() {
+  return navigator.platform.indexOf("Win");
+}

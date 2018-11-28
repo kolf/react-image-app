@@ -3,7 +3,6 @@ const tileData = [
     img: "https://material-ui.com/static/images/grid-list/breakfast.jpg",
     title: "Breakfast",
     author: "jill111",
-    cols: 2,
     featured: true
   },
   {
@@ -36,7 +35,6 @@ const tileData = [
     img: "https://material-ui.com/static/images/grid-list/vegetables.jpg",
     title: "Vegetables",
     author: "jill111",
-    cols: 2
   },
   {
     img: "https://material-ui.com/static/images/grid-list/plant.jpg",
@@ -56,7 +54,6 @@ const tileData = [
   {
     img: "https://material-ui.com/static/images/grid-list/star.jpg",
     title: "Sea star",
-    cols: 2,
     author: "821292"
   },
   {

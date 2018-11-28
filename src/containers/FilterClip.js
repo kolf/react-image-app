@@ -1,6 +1,8 @@
 import React, { Component } from "react";
+import localforage from "localforage";
+
 import Konva from "konva";
-import { createObjectURL, canvasToBlob } from "blob-util";
+import { createObjectURL, dataURLToBlob } from "blob-util";
 import { withStyles } from "@material-ui/core/styles";
 import Slider from "@material-ui/lab/Slider";
 
@@ -24,8 +26,8 @@ class FilterClip extends Component {
     value: 100
   };
 
-  componentDidMount() {
-    const imgUrl = window.localStorage.getItem("imgUrl");
+  async componentDidMount() {
+    const imgUrl = await localforage.getItem("imgUrl");
     const width = Math.min(window.innerWidth, 640);
 
     this.setState({
@@ -34,19 +36,27 @@ class FilterClip extends Component {
     });
   }
 
-  goTo = path => {
+  goTo = (path, state) => {
     this.props.history.push(path);
   };
 
   saveStage = () => {
-    if (!this.stage) {
+    if (!this.stageRef) {
       return;
     }
 
-    canvasToBlob(this.stage.getStage(), "image/png").then(blob => {
-      window.localStorage.setItem("imgUrl", createObjectURL(blob));
+    const file = dataURLToBlob(this.stageRef.getStage().toDataURL());
+    console.log(file);
+
+    localforage.setItem("imgUrl", createObjectURL(file)).then(imgUrl => {
       this.goTo(`/photo/editor-image`);
     });
+    
+    // dataURLToBlob(this.stageRef.getStage().toDataURL()).then(blob => {
+    //   localforage.setItem("imgUrl", createObjectURL(blob)).then(imgUrl => {
+    //     // this.goTo(`/photo/editor-image`);
+    //   });
+    // });
   };
 
   imageRef = f => {
@@ -71,7 +81,7 @@ class FilterClip extends Component {
         <div className="body">
           <div className="stage">
             <Cropper
-              stageRef={f => (this.stage = f)}
+              stageRef={f => (this.stageRef = f)}
               style={{ background: "#333" }}
               height={stageWidth}
               width={stageWidth}
@@ -90,13 +100,13 @@ class FilterClip extends Component {
             </Cropper>
           </div>
         </div>
-        <div className={classes.slider}>
+        {/* <div className={classes.slider}>
           <Slider
             value={value}
             aria-labelledby="label"
             onChange={this.handleChange}
           />
-        </div>
+        </div> */}
         <Footer>
           <Footer.CancelIcon
             onClick={e => this.goTo(`/photo/image-upload/index`)}

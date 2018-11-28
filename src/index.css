@@ -46,7 +46,7 @@ input[type="password"] {
   max-width: 640px;
   position: relative;
   margin: 0 auto;
-  background-color: #000;
+  background-color: #3d3c3c;
 }
 
 .body {
@@ -215,6 +215,18 @@ input[type="password"] {
   padding: 0.4rem;
   border: none;
   box-sizing: border-box;
+}
+
+.buttons{
+  position: absolute;
+   bottom: 120px;
+    height: 50px; 
+    width: 100%;
+    display: inherit;
+}
+
+.action{
+  background-color: #fff;
 }
 
 @font-face {

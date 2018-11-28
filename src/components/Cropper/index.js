@@ -11,11 +11,12 @@ class Drawing extends Component {
     height: 1,
     image: new window.Image()
   };
-
+  isDrawWithNopervade = 0;
   bitmap = null;
   maskBitmap = null;
   sampleColors = {};
   paths = [];
+   tempCtx = null;
   // eraser = { path: [], down: false, sampleColors: {} };
 
   componentDidMount() {
@@ -35,12 +36,12 @@ class Drawing extends Component {
       maskCanvas.height = tempCanvas.height = canvas.height = height;
 
       const context = canvas.getContext("2d");
-      const tempCtx = tempCanvas.getContext("2d");
+      this.tempCtx = tempCanvas.getContext("2d");
       const maskCtx = maskCanvas.getContext("2d");
 
-      tempCtx.drawImage(image, 0, 0, width, height);
+      this.tempCtx.drawImage(image, 0, 0, width, height);
 
-      this.bitmap = tempCtx.getImageData(0, 0, width, height);
+      this.bitmap = this.tempCtx.getImageData(0, 0, width, height);
       this.maskBitmap = maskCtx.getImageData(0, 0, width, height);
       this.setState({ canvas, context, width, height, image });
     });
@@ -59,38 +60,85 @@ class Drawing extends Component {
 
   handleMouseUp = () => {
     const { isDrawing, width, height, context } = this.state;
-    if (isDrawing) {
+
+    if(this.isDrawWithNopervade==1){
+      let data = context.getImageData(0, 0, width, height);
+
+      let s = null;
+      for(const j in data.data){
+        s = data.data[j];
+        
+        
+       if(s==255&&this.isDrawWithNopervade==1) {
+        //console.log('a');
+         this.maskBitmap.data[j] = 0xff;
+         this.maskBitmap.data[parseInt(j) + 1] = 0x00;
+         this.maskBitmap.data[parseInt(j) + 2] = 0x00;
+         this.maskBitmap.data[parseInt(j) + 3] = 0xa0;
+
+       }
+       
+      }
+
+    
+    context.putImageData(this.maskBitmap, 0, 0);
+    this.imageRef.getLayer().draw();
+     
+    }
+    else if(this.isDrawWithNopervade==2){
+      let data = context.getImageData(0, 0, width, height);
+      let s = null;
+      for(const j in data.data){
+        s = data.data[j];
+
+
+        if(j%4==0)
+       if(data.data[parseInt(j) + 3]!=160){
+        this.maskBitmap.data[j] = 0x00;
+         this.maskBitmap.data[parseInt(j) + 1] = 0x00;
+         this.maskBitmap.data[parseInt(j) + 2] = 0x00;
+         this.maskBitmap.data[parseInt(j) + 3] = 0x00;
+       }
+       
+      }
+
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(this.maskBitmap, 0, 0);
+    this.imageRef.getLayer().draw();
+
+    }
+    else if (isDrawing&&this.isDrawWithNopervade==0) {
       context.clearRect(0, 0, width, height);
       this.imageRef.getLayer().draw();
       this.pervade();
-      this.paths = [];
+      //this.paths = [];
     }
+    this.paths = [];
     this.setState({ isDrawing: false });
   };
 
   handleMouseMove = ({ evt }) => {
     const { context, isDrawing } = this.state;
-
-    if (evt.buttons === 1) {
-      // draw
       context.globalCompositeOperation = "source-over";
-    } else if (evt.buttons === 2) {
-      // erase
-      context.globalCompositeOperation = "destination-out";
-    }
+
+    
+
+  
 
     if (isDrawing) {
-      context.strokeStyle = "#ffffff";
+      if(this.isDrawWithNopervade==1)
+        context.strokeStyle = 'rgba(255,0,0,0.4)';
+      else if(this.isDrawWithNopervade==2){
+        context.globalCompositeOperation = "destination-out";
+        //context.strokeStyle = 'rgba(255,0,0,0.4)';
+      }
+      else
+         context.strokeStyle = "#ffffff";
+
       context.lineJoin = "round";
       context.lineWidth = 10;
 
-      if (evt.buttons === 1) {
-        // draw
-        context.globalCompositeOperation = "source-over";
-      } else if (evt.buttons === 2) {
-        // erase
-        context.globalCompositeOperation = "destination-out";
-      }
+      
       context.beginPath();
 
       let localPos = {
@@ -102,9 +150,11 @@ class Drawing extends Component {
       const color = this.getColor(localPos);
       color.x = localPos.x;
       color.y = localPos.y;
+
       this.sampleColors[`c${color.rgb}`] = color;
 
       context.moveTo(localPos.x, localPos.y);
+      //console.log(context);
 
       const stage = this.imageRef.getStage();
       const pos = stage.getPointerPosition();
@@ -143,10 +193,11 @@ class Drawing extends Component {
     });
 
     this.sampleColors = colors;
-
+    console.log('----');
     console.log(this.sampleColors);
     // 从任意一点开始扩张，将相似区域的颜色先全部替换成红色看看
     const paths = [s];
+    this.bitmap=this.tempCtx.getImageData(0, 0, width, height);
     do {
       s = paths.pop();
       if (s === null) break;
@@ -206,6 +257,7 @@ class Drawing extends Component {
     const { context } = this.state;
     context.putImageData(this.maskBitmap, 0, 0);
     this.imageRef.getLayer().draw();
+    //console.log(this.bitmap);
   };
 
   getColor = ({ x, y }) => {
@@ -263,6 +315,8 @@ class Drawing extends Component {
   colorDiff = (x, y, z, r, g, b) =>
     Math.sqrt(Math.pow(x - r, 2) + Math.pow(y - g, 2) + Math.pow(z - b, 2));
 
+
+
   getResult = () => {
     const { width, height } = this.state;
     const length = this.bitmap.data.length;
@@ -284,6 +338,12 @@ class Drawing extends Component {
 
     return result;
   };
+
+  changeDraw = (item) =>{
+      this.isDrawWithNopervade = item;
+      
+
+    };
 
   render() {
     const { imageRef } = this.props;
@@ -321,7 +381,6 @@ class XImage extends Component {
 
     const crossOrigin = /^http/.test(src);
     loadImage(src, crossOrigin).then(image => {
-      this.imageRef.getLayer().batchDraw();
       const { width, height } =
         maxWidth && maxHeight
           ? resizeImage(image.width, image.height, maxWidth, maxHeight)
@@ -403,6 +462,9 @@ class XText extends Component {
       this.props.fontFamily !== nextProps.fontFamily ||
       this.state.width !== nextProps.width
     ) {
+      if(!this.textRef){
+        return;
+      }
       const timer = setTimeout(() => {
         clearTimeout(timer);
         this.setRect();
@@ -420,8 +482,6 @@ class XText extends Component {
       width: newWidth,
       height: newHeight
     });
-
-    console.log(this.textRef.parent, "this.textRef");
 
     onChange &&
       onChange({
@@ -584,7 +644,7 @@ class Selected extends Component {
 
 class Cropper extends Component {
   render() {
-    const { children, width, height, stageRef } = this.props;
+    const { children, width, height, stageRef, layerProps } = this.props;
     const stageProps = {
       ...this.props,
       height: height || width,
@@ -596,7 +656,7 @@ class Cropper extends Component {
 
     return (
       <Stage {...stageProps}>
-        <Layer>{children}</Layer>
+        <Layer {...layerProps}>{children}</Layer>
       </Stage>
     );
   }
@@ -604,6 +664,7 @@ class Cropper extends Component {
 
 Cropper.Image = XImage;
 Cropper.Text = XText;
+Cropper.Rect = Rect;
 Cropper.Drawing = Drawing;
 Cropper.Clipping = Clipping;
 Cropper.Selected = Selected;

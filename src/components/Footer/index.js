@@ -6,6 +6,19 @@ import cancelIcon from "../../assets/cancel.png";
 
 import "./style.css";
 
+/*<const Item = ({ path, icon, children }) => {
+  return (
+    <Link to={path} className="footer-item">
+      <div className="icon">
+        <img src={icon} alt="Kolf" />
+      </div>
+      <p className="label">
+        <span>{children}</span>
+      </p>
+    </Link>
+  );
+};*/
+
 const Item = ({ path, icon, children }) => {
   return (
     <Link to={path} className="footer-item">
@@ -16,6 +29,19 @@ const Item = ({ path, icon, children }) => {
         <span>{children}</span>
       </p>
     </Link>
+  );
+};
+
+const Item1 = ({ icon, children,onClick,classname }) => {
+  return (
+    <div className={classname} onClick={onClick}>
+      <div className="icon">
+        <img src={icon} alt="Kolf" />
+      </div>
+      <p className="label">
+        <span>{children}</span>
+      </p>
+    </div>
   );
 };
 
@@ -64,6 +90,8 @@ const Footer = ({ children, style }) => {
 };
 
 Footer.Item = Item;
+Footer.Item1 = Item1;
+
 Footer.Title = Title;
 Footer.OkIcon = OkIcon;
 Footer.CancelIcon = CancelIcon;
