@@ -7,6 +7,8 @@ import Clipping from "./containers/Clipping";
 import ClipHome from "./containers/ClipHome";
 import FilterClip from "./containers/FilterClip";
 import CutClip from "./containers/CutClip";
+import Success from "./containers/Success";
+
 class App extends Component {
   render() {
     return (
@@ -31,6 +33,7 @@ class App extends Component {
             path="/photo/image-upload/cut-clip"
             component={CutClip}
           />
+          <Route exact path="/photo/success" component={Success} />
         </div>
       </Router>
     );

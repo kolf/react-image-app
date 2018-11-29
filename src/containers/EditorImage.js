@@ -33,9 +33,9 @@ const Thumbs = ({ items, onClick }) => {
   return (
     <div className="upload-image-root">
       <div className="upload-box">
-        <Upload {...uploadProps}>
+        <span className="upload-btn">
           <img src={uploadUrl} alt="upload" />
-        </Upload>
+        </span>
 
         <div className="upload-list">
           <ul style={{ width: `${3.6 * (items.length + 1)}rem` }}>
