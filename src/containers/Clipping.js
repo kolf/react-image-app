@@ -1,10 +1,16 @@
 import React, { Component } from "react";
-import { createObjectURL, canvasToBlob } from "blob-util";
+import localforage from "localforage";
+import axios from "axios";
+import { dataURLToBlob } from "blob-util";
 import ReactCrop from "react-easy-crop";
 import Footer from "../components/Footer";
 import { loadImage } from "../components/Cropper/utils";
+import { getQueryString } from "../utils";
 
-function getCroppedImg(image, pixelCrop) {
+const API_ROOT = "http://gold.dreamdeck.cn";
+
+
+function getCroppedImg(image, pixelCrop, callback) {
   const canvas = document.createElement("canvas");
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
@@ -22,7 +28,7 @@ function getCroppedImg(image, pixelCrop) {
     pixelCrop.height
   );
 
-  return canvasToBlob(canvas, "image/png");
+  callback(canvas);
 }
 class Clipping extends Component {
   state = {
@@ -35,8 +41,9 @@ class Clipping extends Component {
   imageObj = null;
   croppedAreaPixels = null;
 
-  componentDidMount() {
-    const imgUrl = window.localStorage.getItem("imgUrl");
+  async componentDidMount() {
+    const imgUrl = await getQueryString("imgUrl");
+    // alert(imgUrl)
     const width = Math.min(window.innerWidth, 640);
 
     loadImage(imgUrl, "image/png").then(image => {
@@ -61,15 +68,56 @@ class Clipping extends Component {
     this.setState({ zoom });
   };
 
-  goTo = path => {
+  goTo = (path, state) => {
     this.props.history.push(path);
   };
 
-  save = () => {
-    getCroppedImg(this.imageObj, this.croppedAreaPixels).then(blob => {
-      window.localStorage.setItem("imgUrl", createObjectURL(blob));
-      this.goTo("/photo/image-upload/index");
+  upload = (canvas, callback) => {
+    const data = new FormData();
+    const file = dataURLToBlob(canvas.toDataURL("image/png"));
+    data.append("imgFile", file);
+    axios
+      .post(`${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`, data, {
+        headers: { "content-type": "multipart/form-data" }
+      })
+      .then(res => {
+        const { data } = res;
+        if (data.code != "00") {
+          alert(data.msg);
+        } else {
+          const imgUrl = `${API_ROOT}/app/icons${data.object.imgPath}`;
+          callback(imgUrl);
+        }
+      });
+  };
+
+  saveStage = () => {
+    getCroppedImg(this.imageObj, this.croppedAreaPixels, canvas => {
+      this.upload(canvas, imgUrl => {
+        localforage.setItem("imgUrl", imgUrl).then(() => {
+          this.goTo("/photo/image-upload/index");
+        });
+      });
     });
+  };
+
+  upload = (canvas, callback) => {
+    const data = new FormData();
+    const file = dataURLToBlob(canvas.toDataURL("image/png"));
+    data.append("imgFile", file);
+    axios
+      .post(`${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`, data, {
+        headers: { "content-type": "multipart/form-data" }
+      })
+      .then(res => {
+        const { data } = res;
+        if (data.code != "00") {
+          alert(data.msg);
+        } else {
+          const imgUrl = `${API_ROOT}/app/icons${data.object.imgPath}`;
+          callback(imgUrl);
+        }
+      });
   };
 
   render() {
@@ -100,7 +148,7 @@ class Clipping extends Component {
             onClick={e => this.goTo(`/photo/image-upload/index`)}
           />
           <Footer.Title>裁切</Footer.Title>
-          <Footer.OkIcon onClick={this.save} />
+          <Footer.OkIcon onClick={this.saveStage} />
         </Footer>
       </div>
     );

@@ -6,7 +6,7 @@
 .rc-notification-notice {
   padding: 6px 10px;
   border-radius: 3px 3px;
-  border: 0px solid rgba(0, 0, 0, 0);
+  border: 0px solid #fff;
   background: #fff;
   display: block;
   width: auto;
@@ -22,7 +22,7 @@
   position: absolute;
   right: 5px;
   top: 3px;
-  color: #000;
+  color: #fff;
   cursor: pointer;
   outline: none;
   font-size: 16px;

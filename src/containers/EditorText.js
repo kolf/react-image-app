@@ -1,8 +1,9 @@
 import React, { Component } from "react";
+import localforage from "localforage";
+
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
 import Transformer from "../components/Transformer";
-import Prompt from "../components/Prompt";
 import { uid } from "../utils";
 import addTextUrl from "../assets/addText.png";
 
@@ -46,7 +47,7 @@ const colors = [
   "000000"
 ].map(c => `#${c}`);
 
-const fontFamilys = ["font1", "font2", "font3", "font4", "font6", "font5"];
+const fontFamilys = ["font1", "font2", "font3", "font4", "font5", "font6", "font7", "font8", "font9", "font10", "font11", "font12", "font13", "font14", "font15", "font16"];
 
 const Add = ({ onClick }) => (
   <div className="add">
@@ -136,15 +137,21 @@ class EditorText extends Component {
   };
 
   index = 0;
+  colorId = "000000";
 
   componentDidMount() {
     this.state.stageWidth = Math.min(window.innerWidth, 640) * 0.8;
     this.initStage();
   }
 
-  initStage = () => {
+  initStage = async () => {
     const { imageMap } = this.state;
-    const stageJson = JSON.parse(window.localStorage.getItem("stageJson"));
+    const colorId = await localforage.getItem("colorId");
+    let stageJson = await localforage.getItem("stageJson");
+
+    if (typeof stageJson === "string") {
+      stageJson = JSON.parse(stageJson);
+    }
 
     if (stageJson) {
       const images = stageJson.children[0].children;
@@ -152,7 +159,7 @@ class EditorText extends Component {
       for (const { attrs } of images) {
         const key = attrs.uid;
         if (!/bg|image|text/g.test(key)) {
-          break;
+          continue;
         }
         const rotation = attrs.rotation || 0;
         imageMap.set(key, {
@@ -164,15 +171,19 @@ class EditorText extends Component {
       }
     }
 
+    this.colorId = colorId;
     this.setState({ imageMap });
   };
 
-  goTo = path => {
+  goTo = (path, state) => {
     this.props.history.push(path);
   };
 
   createImage = () => {
     const { stageWidth, imageMap, editText } = this.state;
+
+    console.log(editText.fontFamily)
+    console.log(editText)
 
     const imageKey = uid.get("text-");
 
@@ -189,7 +200,7 @@ class EditorText extends Component {
       index: this.index++
     });
 
-    this.setState({ imageMap, textStatus: "", editText: defaultEditText });
+    this.setState({ imageMap, textStatus: "" });
   };
 
   saveStage = (e, callback) => {
@@ -201,12 +212,10 @@ class EditorText extends Component {
       return;
     }
 
-    const timer = setTimeout(() => {
-      clearTimeout(timer);
-      const stageJson = this.stage.getStage().toJSON();
-      window.localStorage.setItem("stageJson", stageJson);
-      callback && callback(stageJson);
-    }, 30);
+    const stageJson = this.stage.getStage().toJSON();
+    localforage.setItem("stageJson", stageJson).then(data => {
+      callback && callback(data);
+    });
   };
 
   handleTap = activeKey => {
@@ -223,18 +232,45 @@ class EditorText extends Component {
     });
   };
 
+  // handlePressMove = e => {
+  //   const { activeKey, imageMap } = this.state;
+
+  //   if (!activeKey) {
+  //     return;
+  //   }
+
+  //   const image = imageMap.get(activeKey);
+
+  //   this.updateImage({
+  //     x: e.deltaX + image.x,
+  //     y: e.deltaY + image.y
+  //   });
+  // };
+
+
   handlePressMove = e => {
-    const { activeKey, imageMap } = this.state;
+    const { activeKey, imageMap, stageWidth } = this.state;
 
     if (!activeKey) {
       return;
     }
 
     const image = imageMap.get(activeKey);
+    const rWdith = (image.width / 2) * (image.scaleX || 1);
+    const rHeight = (image.height / 2) * (image.scaleY || 1);
+
+    const x = Math.min(
+      Math.max(e.deltaX + image.x, rWdith),
+      stageWidth - rWdith
+    );
+    const y = Math.min(
+      Math.max(e.deltaY + image.y, rHeight),
+      stageWidth - rHeight
+    );
 
     this.updateImage({
-      x: e.deltaX + image.x,
-      y: e.deltaY + image.y
+      x,
+      y
     });
   };
 
@@ -246,7 +282,7 @@ class EditorText extends Component {
     }
 
     const image = imageMap.get(activeKey);
-    const scale = e.zoom * image.initScale;
+    const scale = Math.max(Math.min(4, image.initScale * e.scale), 0.5);
 
     this.updateImage({
       scaleX: scale,
@@ -349,6 +385,8 @@ class EditorText extends Component {
   showTools = textKey => {
     let textStatus = "create";
 
+
+
     let { editText, imageMap } = this.state;
     if (textKey) {
       const { text, fontFamily, color } = imageMap.get(textKey);
@@ -366,7 +404,7 @@ class EditorText extends Component {
   onCancel = e => {
     const { textStatus } = this.state;
     if (!textStatus) {
-      this.goTo("/photo");
+      this.goTo("/photo?color=" + this.colorId);
     } else {
       this.setState({ textStatus: "" });
     }
@@ -395,7 +433,7 @@ class EditorText extends Component {
       });
     } else {
       this.saveStage(e, stageJson => {
-        Prompt.message(<span>保存成功</span>);
+        this.goTo("/photo?color=" + this.colorId);
       });
     }
   };
@@ -423,12 +461,6 @@ class EditorText extends Component {
       (image1, image2) => image1.index - image2.index
     );
 
-    if (!images.length) {
-      return <div className="page" />;
-    }
-
-    console.log(updateKey, "updateKey");
-
     return (
       <div className="page">
         <div className="body" style={s.body}>
@@ -441,7 +473,7 @@ class EditorText extends Component {
               onDoubleTap={this.handleDbTap}
             >
               <Cropper
-                style={{ background: "#333" }}
+                style={{ background: "#" + this.colorId }}
                 stageRef={f => (this.stage = f)}
                 width={stageWidth}
               >
@@ -455,13 +487,13 @@ class EditorText extends Component {
                       center
                     />
                   ) : (
-                    <Cropper.Text
-                      onChange={props => this.changeImage(key, props)}
-                      onTouchStart={e => this.handleTap(key)}
-                      key={key}
-                      {...image}
-                    />
-                  );
+                      <Cropper.Text
+                        onChange={props => this.changeImage(key, props)}
+                        onTouchStart={e => this.handleTap(key)}
+                        key={key}
+                        {...image}
+                      />
+                    );
                 })}
                 {activeKey ? (
                   <Cropper.Selected
@@ -484,7 +516,7 @@ class EditorText extends Component {
               <Texts onChange={this.onEditText} value={fontFamily} />
               <Footer
                 key={"footer-text"}
-                style={{ background: "#000", zIndex: 1100 }}
+                style={{ background: "#000000", zIndex: 1100 }}
               >
                 <Footer.CancelIcon onClick={this.onCancel} />
                 <Footer.Title>{statusMap[textStatus]}</Footer.Title>

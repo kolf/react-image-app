@@ -1,15 +1,15 @@
 import React, { Component } from "react";
 import Upload from "rc-upload";
 import axios from "axios";
+import localforage from "localforage";
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
 import Transformer from "../components/Transformer";
-import Prompt from "../components/Prompt";
 
 import uploadUrl from "../assets/upload.gif";
 import tukuUrl from "../assets/tk.png";
 
-import { uid } from "../utils";
+import { uid, isWindow } from "../utils";
 
 const API_ROOT = "http://gold.dreamdeck.cn";
 
@@ -17,7 +17,7 @@ const Thumbs = ({ items, onClick }) => {
   const uploadProps = {
     className: "upload-btn",
     name: "imgFile",
-    action: `${API_ROOT}/mc/app/write/v1/base/photo/upload`,
+    action: `${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`,
     // accept: "image/gif,image/png,image/jpeg,image/jpg,image/bmp",
     onSuccess(file) {
       const {
@@ -30,13 +30,27 @@ const Thumbs = ({ items, onClick }) => {
     }
   };
 
+  const UploadBtn = (
+    <Upload {...uploadProps}>
+      <img src={uploadUrl} alt="upload" />
+    </Upload>
+  );
+
+  const linkBtn = (
+    <span
+      className="upload-btn"
+      onClick={e => {
+        onClick({ key: "upload" });
+      }}
+    >
+      <img src={uploadUrl} alt="upload" />
+    </span>
+  );
+
   return (
     <div className="upload-image-root">
       <div className="upload-box">
-        <span className="upload-btn">
-          <img src={uploadUrl} alt="upload" />
-        </span>
-
+        {UploadBtn}
         <div className="upload-list">
           <ul style={{ width: `${3.6 * (items.length + 1)}rem` }}>
             <li key="resources" onClick={e => onClick({ key: "resources" })}>
@@ -63,6 +77,7 @@ class EditorImage extends Component {
   };
 
   index = 0;
+  colorId = "000000";
 
   componentDidMount() {
     this.state.stageWidth = Math.min(window.innerWidth, 640) * 0.8;
@@ -72,7 +87,7 @@ class EditorImage extends Component {
 
   loadThumbs = async () => {
     const thumbs = await axios
-      .get(`${API_ROOT}/mc/base/read/v1/base/icon/list`)
+      .get(`${API_ROOT}/mc/base/read/v1/base/icon/list?isHot=1`)
       .then(res =>
         res.data.object.baseIconList.map(item => ({
           url: `${API_ROOT}/app/icons${item.iconPath}`,
@@ -85,18 +100,25 @@ class EditorImage extends Component {
     });
   };
 
-  initStage = () => {
+  initStage = async () => {
     const { imageMap } = this.state;
-    const stageJson = JSON.parse(window.localStorage.getItem("stageJson"));
-    const imgUrl = window.localStorage.getItem("imgUrl");
+    const imgUrl = await localforage.getItem("imgUrl");
+    const resImgUrl = await localforage.getItem("resImgUrl");
+    const colorId = await localforage.getItem("colorId");
+    let stageJson = await localforage.getItem("stageJson");
+
+    if (typeof stageJson === "string") {
+      stageJson = JSON.parse(stageJson);
+    }
 
     if (stageJson) {
       const images = stageJson.children[0].children;
 
       for (const { attrs } of images) {
         const key = attrs.uid;
+
         if (!/bg|image|text/g.test(key)) {
-          break;
+          continue;
         }
         const rotation = attrs.rotation || 0;
         imageMap.set(key, {
@@ -109,29 +131,43 @@ class EditorImage extends Component {
     }
 
     if (imgUrl) {
-      window.localStorage.removeItem("imgUrl");
+      localforage.removeItem("imgUrl");
       this.handleThumbClick({
         url: imgUrl
       });
     }
+    if (resImgUrl) {
+      localforage.removeItem("resImgUrl");
+      this.handleThumbClick({
+        url: resImgUrl
+      });
+    }
 
+    this.colorId = colorId;
     this.setState({ imageMap });
   };
 
-  goTo = path => {
+  goTo = (path, state) => {
     this.props.history.push(path);
   };
 
   handleThumbClick = ({ key, url }) => {
+    console.log(url);
     const { stageWidth, imageMap } = this.state;
     if (key === "upload") {
-      window.localStorage.setItem("imgUrl", url);
-      this.goTo(`/photo/image-upload/clipping`);
-      this.save();
+      if (url) {
+        this.goTo(`/photo/image-upload/clipping?imgUrl=${url}`);
+      } else {
+        // this.goTo("/photo/upload");
+        window.location.href = "http://gold.dreamdeck.cn/photo/upload.html";
+        //this.goTo("/photo/image-upload/clipping?imgUrl=http://gold.dreamdeck.cn/app/icons/gold/test.jpg")
+      }
+
+      this.saveStage();
       return;
     } else if (key === "resources") {
       this.goTo(`/photo/resources`);
-      this.save();
+      this.saveStage();
       return;
     }
 
@@ -154,7 +190,7 @@ class EditorImage extends Component {
     this.setState({ imageMap });
   };
 
-  save = (e, callback) => {
+  saveStage = (e, callback) => {
     this.setState({
       activeKey: ""
     });
@@ -163,12 +199,10 @@ class EditorImage extends Component {
       return;
     }
 
-    const timer = setTimeout(() => {
-      clearTimeout(timer);
-      const stageJson = this.stage.getStage().toJSON();
-      window.localStorage.setItem("stageJson", stageJson);
-      callback && callback();
-    }, 30);
+    const stageJson = this.stage.getStage().toJSON();
+    localforage.setItem("stageJson", stageJson).then(data => {
+      callback && callback(data);
+    });
   };
 
   handleTap = activeKey => {
@@ -316,10 +350,6 @@ class EditorImage extends Component {
       (image1, image2) => image1.index - image2.index
     );
 
-    if (!images.length) {
-      return <div className="page" />;
-    }
-
     return (
       <div className="page">
         <div className="body" style={s.body}>
@@ -331,28 +361,29 @@ class EditorImage extends Component {
               onRotate={this.handleRotate}
             >
               <Cropper
-                style={{ background: "#333" }}
+                style={{ backgroundColor: "#" + this.colorId }}
                 stageRef={f => (this.stage = f)}
                 width={stageWidth}
               >
-                {images.map(image => {
-                  const key = image.uid;
-                  return /image|bg/.test(key) ? (
-                    <Cropper.Image
-                      onChange={props => this.changeImage(key, props)}
-                      onTouchStart={e => this.handleTap(key)}
-                      key={key}
-                      {...image}
-                      center
-                    />
-                  ) : (
-                    <Cropper.Text
-                      onTouchStart={e => this.handleTap(key)}
-                      key={key}
-                      {...image}
-                    />
-                  );
-                })}
+                {images.length > 0 &&
+                  images.map(image => {
+                    const key = image.uid;
+                    return /image|bg/.test(key) ? (
+                      <Cropper.Image
+                        onChange={props => this.changeImage(key, props)}
+                        onTouchStart={e => this.handleTap(key)}
+                        key={key}
+                        {...image}
+                        center
+                      />
+                    ) : (
+                      <Cropper.Text
+                        onTouchStart={e => this.handleTap(key)}
+                        key={key}
+                        {...image}
+                      />
+                    );
+                  })}
                 {activeKey ? (
                   <Cropper.Selected
                     {...this.getSelectdProps()}
@@ -365,12 +396,15 @@ class EditorImage extends Component {
         </div>
         <Thumbs items={thumbs} onClick={this.handleThumbClick} />
         <Footer>
-          <Footer.CancelIcon onClick={e => this.goTo("/photo")} />
+          <Footer.CancelIcon
+            onClick={e => this.goTo("/photo?color=" + this.colorId)}
+            //onClick={e => this.goTo("/photo/image-upload/clipping?imgUrl=http://gold.dreamdeck.cn/app/icons/gold/test.jpg")}
+          />
           <Footer.Title>图片</Footer.Title>
           <Footer.OkIcon
             onClick={e =>
-              this.save(e, () => {
-                Prompt.message(<span>保存成功</span>);
+              this.saveStage(e, () => {
+                this.goTo("/photo?color=" + this.colorId);
               })
             }
           />

@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-
+import localforage from "localforage";
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
 import { uid } from "../utils";
@@ -27,8 +27,8 @@ class ClipHome extends Component {
     stageWidth: 1
   };
 
-  componentDidMount() {
-    const imgUrl = window.localStorage.getItem("imgUrl");
+  async componentDidMount() {
+    const imgUrl = await localforage.getItem("imgUrl");
     const width = Math.min(window.innerWidth, 640);
 
     this.uid = uid.get("image-");
