@@ -221,7 +221,15 @@ class Home extends Component {
   //   });
   // };
   handlePressMove = e => {
-    const { stage, stageWidth } = this.state;
+    const { activeKey, stage, stageWidth } = this.state;
+
+    if (!activeKey) {
+      return;
+    }
+
+    if (stage.scaleX <= 1) {
+      return false;
+    }
 
     const x = Math.max(
       Math.min(stageWidth * 1.1, e.deltaX + stage.x),
@@ -237,38 +245,23 @@ class Home extends Component {
       x,
       y
     });
-    // const { activeKey, imageMap, stageWidth } = this.state;
-
-    // if (!activeKey) {
-    //   return;
-    // }
-
-    // const image = imageMap.get(activeKey);
-    // const rWdith = (image.width / 2) * (image.scaleX || 1);
-    // const rHeight = (image.height / 2) * (image.scaleY || 1);
-
-    // const x = Math.min(
-    //   Math.max(e.deltaX + image.x, rWdith),
-    //   stageWidth - rWdith
-    // );
-    // const y = Math.min(
-    //   Math.max(e.deltaY + image.y, rHeight),
-    //   stageWidth - rHeight
-    // );
-
-    // this.updateStage({
-    //   x,
-    //   y
-    // });
   };
 
   handlePinch = e => {
-    const { stage } = this.state;
+    const { stage, stageWidth } = this.state;
+    const {
+      center: { x, y }
+    } = e;
+
     const scale = Math.max(e.zoom * stage.initScale, 1);
+
+    alert(JSON.stringify(stage));
 
     this.updateStage({
       scaleX: scale,
-      scaleY: scale
+      scaleY: scale,
+      x: x - stageWidth / 2,
+      y: y - stageWidth / 2
     });
   };
 
@@ -297,15 +290,15 @@ class Home extends Component {
   handleTouchEnd = () => {
     const { stageWidth } = this.state;
 
-    this.updateStage({
-      x: stageWidth / 2,
-      y: stageWidth / 2,
-      maxWidth: stageWidth,
-      maxHeight: stageWidth,
-      scaleX: 1,
-      scaleY: 1,
-      rotation: 0
-    });
+    // this.updateStage({
+    //   x: stageWidth / 2,
+    //   y: stageWidth / 2,
+    //   maxWidth: stageWidth,
+    //   maxHeight: stageWidth,
+    //   scaleX: 1,
+    //   scaleY: 1,
+    //   rotation: 0
+    // });
   };
 
   render() {
@@ -341,7 +334,7 @@ class Home extends Component {
                 {images.map(image => {
                   const key = image.uid;
                   return /image|bg/.test(key) ? (
-                    <Cropper.Image key={key} {...image} center />
+                    <Cropper.Image key={key} {...image} />
                   ) : (
                     <Cropper.Text key={key} {...image} />
                   );

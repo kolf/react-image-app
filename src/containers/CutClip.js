@@ -1,37 +1,12 @@
 import React, { Component } from "react";
 import localforage from "localforage";
-import axios from "axios";
 import { createObjectURL, canvasToBlob } from "blob-util";
 import Footer from "../components/Footer";
 import Cropper from "../components/Cropper";
-import img1 from "../assets/img1.png";
-import img2 from "../assets/img2.png";
-import img3 from "../assets/img3.png";
-
-const FooterItem = Footer.Item1;
-
-const bottons = [
-  {
-    text: "魔法棒",
-    icon: img1
-  },
-  {
-    text: "填充",
-    icon: img2
-  },
-  {
-    text: "橡皮擦",
-    icon: img3
-  }
-];
-
-//let index = 0;
-const API_ROOT = "http://gold.dreamdeck.cn";
 
 class CutClip extends Component {
   state = {
-    stageWidth: 1,
-    currentIndex: 0
+    stageWidth: 1
   };
 
   async componentDidMount() {
@@ -43,28 +18,6 @@ class CutClip extends Component {
       imgUrl
     });
   }
-
-  upload = (canvas, callback) => {
-    const data = new FormData();
-    console.log(canvas.toDataURL());
-    canvasToBlob(canvas, "image/png").then(blob => {
-      console.log(blob, "blob");
-      data.append("imgFile", blob);
-      axios
-        .post(`${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`, data, {
-          headers: { "content-type": "multipart/form-data" }
-        })
-        .then(res => {
-          console.log(res);
-          if (res.data.code != "00") {
-            alert(res.data.msg);
-          } else {
-            const imgUrl = `${API_ROOT}/app/icons${res.object.imgPath}`;
-            callback(imgUrl);
-          }
-        });
-    });
-  };
 
   goTo = (path, state) => {
     this.props.history.push(path);
@@ -80,21 +33,6 @@ class CutClip extends Component {
         this.goTo(`/photo/editor-image`);
       });
     });
-    // this.upload(this.drawingRef.getResult(), imgUrl => {
-    //   localforage.setItem("imgUrl", imgUrl).then(imgUrl => {
-    //     this.goTo(`/photo/editor-image`);
-    //   });
-    // });
-  };
-
-  startDrawWithNoPer = i => {
-    //index = i;
-    this.setState({ currentIndex: i });
-    //console.log(index==i);
-    //this.icon = c3Url;
-    //let l = document.getElementByClassName('footer-item');
-    //console.log(arguments[1]);
-    this.drawingRef.changeDraw(i);
   };
 
   render() {
@@ -123,30 +61,13 @@ class CutClip extends Component {
               />
             </Cropper>
           </div>
-          <div className="buttons">
-            {bottons.map((f, i) => (
-              <FooterItem
-                key={i}
-                icon={f.icon}
-                onClick={e => this.startDrawWithNoPer(i)}
-                classname={
-                  this.state.currentIndex == i
-                    ? "action footer-item"
-                    : "footer-item"
-                }
-              >
-                {f.text}
-              </FooterItem>
-            ))}
-          </div>
         </div>
-
         <Footer>
           <Footer.CancelIcon
             onClick={e => this.goTo(`/photo/image-upload/index`)}
           />
           <Footer.Title>图割抠图</Footer.Title>
-          <Footer.OkIcon onClick={e => this.saveStage()} />
+          <Footer.OkIcon onClick={this.saveStage} />
         </Footer>
       </div>
     );
