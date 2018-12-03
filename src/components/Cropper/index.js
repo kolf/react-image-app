@@ -16,7 +16,7 @@ class Drawing extends Component {
   maskBitmap = null;
   sampleColors = {};
   paths = [];
-   tempCtx = null;
+  tempCtx = null;
   // eraser = { path: [], down: false, sampleColors: {} };
 
   componentDidMount() {
@@ -61,53 +61,43 @@ class Drawing extends Component {
   handleMouseUp = () => {
     const { isDrawing, width, height, context } = this.state;
 
-    if(this.isDrawWithNopervade==1){
+    if (this.isDrawWithNopervade == 1) {
       let data = context.getImageData(0, 0, width, height);
 
       let s = null;
-      for(const j in data.data){
+      for (const j in data.data) {
         s = data.data[j];
-        
-        
-       if(s==255&&this.isDrawWithNopervade==1) {
-        //console.log('a');
-         this.maskBitmap.data[j] = 0xff;
-         this.maskBitmap.data[parseInt(j) + 1] = 0x00;
-         this.maskBitmap.data[parseInt(j) + 2] = 0x00;
-         this.maskBitmap.data[parseInt(j) + 3] = 0xa0;
 
-       }
-       
+        if (s == 255 && this.isDrawWithNopervade == 1) {
+          //console.log('a');
+          this.maskBitmap.data[j] = 0xff;
+          this.maskBitmap.data[parseInt(j) + 1] = 0x00;
+          this.maskBitmap.data[parseInt(j) + 2] = 0x00;
+          this.maskBitmap.data[parseInt(j) + 3] = 0xa0;
+        }
       }
 
-    
-    context.putImageData(this.maskBitmap, 0, 0);
-    this.imageRef.getLayer().draw();
-     
-    }
-    else if(this.isDrawWithNopervade==2){
+      context.putImageData(this.maskBitmap, 0, 0);
+      this.imageRef.getLayer().draw();
+    } else if (this.isDrawWithNopervade == 2) {
       let data = context.getImageData(0, 0, width, height);
       let s = null;
-      for(const j in data.data){
+      for (const j in data.data) {
         s = data.data[j];
 
-
-        if(j%4==0)
-       if(data.data[parseInt(j) + 3]!=160){
-        this.maskBitmap.data[j] = 0x00;
-         this.maskBitmap.data[parseInt(j) + 1] = 0x00;
-         this.maskBitmap.data[parseInt(j) + 2] = 0x00;
-         this.maskBitmap.data[parseInt(j) + 3] = 0x00;
-       }
-       
+        if (j % 4 == 0)
+          if (data.data[parseInt(j) + 3] != 160) {
+            this.maskBitmap.data[j] = 0x00;
+            this.maskBitmap.data[parseInt(j) + 1] = 0x00;
+            this.maskBitmap.data[parseInt(j) + 2] = 0x00;
+            this.maskBitmap.data[parseInt(j) + 3] = 0x00;
+          }
       }
 
-    context.globalCompositeOperation = "source-over";
-    context.putImageData(this.maskBitmap, 0, 0);
-    this.imageRef.getLayer().draw();
-
-    }
-    else if (isDrawing&&this.isDrawWithNopervade==0) {
+      context.globalCompositeOperation = "source-over";
+      context.putImageData(this.maskBitmap, 0, 0);
+      this.imageRef.getLayer().draw();
+    } else if (isDrawing && this.isDrawWithNopervade == 0) {
       context.clearRect(0, 0, width, height);
       this.imageRef.getLayer().draw();
       this.pervade();
@@ -119,26 +109,19 @@ class Drawing extends Component {
 
   handleMouseMove = ({ evt }) => {
     const { context, isDrawing } = this.state;
-      context.globalCompositeOperation = "source-over";
-
-    
-
-  
+    context.globalCompositeOperation = "source-over";
 
     if (isDrawing) {
-      if(this.isDrawWithNopervade==1)
-        context.strokeStyle = 'rgba(255,0,0,0.4)';
-      else if(this.isDrawWithNopervade==2){
+      if (this.isDrawWithNopervade == 1)
+        context.strokeStyle = "rgba(255,0,0,0.4)";
+      else if (this.isDrawWithNopervade == 2) {
         context.globalCompositeOperation = "destination-out";
         //context.strokeStyle = 'rgba(255,0,0,0.4)';
-      }
-      else
-         context.strokeStyle = "#ffffff";
+      } else context.strokeStyle = "#ffffff";
 
       context.lineJoin = "round";
       context.lineWidth = 10;
 
-      
       context.beginPath();
 
       let localPos = {
@@ -193,11 +176,10 @@ class Drawing extends Component {
     });
 
     this.sampleColors = colors;
-    console.log('----');
-    console.log(this.sampleColors);
+
     // 从任意一点开始扩张，将相似区域的颜色先全部替换成红色看看
     const paths = [s];
-    this.bitmap=this.tempCtx.getImageData(0, 0, width, height);
+    this.bitmap = this.tempCtx.getImageData(0, 0, width, height);
     do {
       s = paths.pop();
       if (s === null) break;
@@ -315,8 +297,6 @@ class Drawing extends Component {
   colorDiff = (x, y, z, r, g, b) =>
     Math.sqrt(Math.pow(x - r, 2) + Math.pow(y - g, 2) + Math.pow(z - b, 2));
 
-
-
   getResult = () => {
     const { width, height } = this.state;
     const length = this.bitmap.data.length;
@@ -339,11 +319,9 @@ class Drawing extends Component {
     return result;
   };
 
-  changeDraw = (item) =>{
-      this.isDrawWithNopervade = item;
-      
-
-    };
+  changeDraw = item => {
+    this.isDrawWithNopervade = item;
+  };
 
   render() {
     const { imageRef } = this.props;
@@ -462,7 +440,7 @@ class XText extends Component {
       this.props.fontFamily !== nextProps.fontFamily ||
       this.state.width !== nextProps.width
     ) {
-      if(!this.textRef){
+      if (!this.textRef) {
         return;
       }
       const timer = setTimeout(() => {

@@ -46,7 +46,9 @@ class CutClip extends Component {
 
   upload = (canvas, callback) => {
     const data = new FormData();
-    canvasToBlob(canvas).then(blob => {
+    console.log(canvas.toDataURL());
+    canvasToBlob(canvas, "image/png").then(blob => {
+      console.log(blob, "blob");
       data.append("imgFile", blob);
       axios
         .post(`${API_ROOT}/mc/app/write/v1/base/photo/h5/upload`, data, {
@@ -73,11 +75,16 @@ class CutClip extends Component {
       return;
     }
 
-    this.upload(this.drawingRef.getResult(), imgUrl => {
-      localforage.setItem("imgUrl", imgUrl).then(imgUrl => {
+    canvasToBlob(this.drawingRef.getResult(), "image/png").then(blob => {
+      localforage.setItem("imgUrl", createObjectURL(blob)).then(imgUrl => {
         this.goTo(`/photo/editor-image`);
       });
     });
+    // this.upload(this.drawingRef.getResult(), imgUrl => {
+    //   localforage.setItem("imgUrl", imgUrl).then(imgUrl => {
+    //     this.goTo(`/photo/editor-image`);
+    //   });
+    // });
   };
 
   startDrawWithNoPer = i => {

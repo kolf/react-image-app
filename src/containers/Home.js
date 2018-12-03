@@ -294,6 +294,20 @@ class Home extends Component {
     );
   };
 
+  handleTouchEnd = () => {
+    const { stageWidth } = this.state;
+
+    this.updateStage({
+      x: stageWidth / 2,
+      y: stageWidth / 2,
+      maxWidth: stageWidth,
+      maxHeight: stageWidth,
+      scaleX: 1,
+      scaleY: 1,
+      rotation: 0
+    });
+  };
+
   render() {
     const { imageMap, stageWidth, stage, uploading, colorId } = this.state;
     const images = [...imageMap.values()];
@@ -304,6 +318,7 @@ class Home extends Component {
           <div className="stage">
             <Transformer
               onMultipointStart={this.hanleMultipointStart}
+              onTouchEnd={this.handleTouchEnd}
               onPinch={this.handlePinch}
               onPressMove={this.handlePressMove}
             >
